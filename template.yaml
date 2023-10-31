@@ -1,0 +1,172 @@
+_version: &module_version 5.7.5
+
+_globals: &global_settings
+  default_region: "region1"
+  regions:
+    region1: {{ .variables.location }}
+  prefixes: ["dev"]
+  random_length: 4
+  passthrough: false
+  use_slug: false
+  inherit_tags: false
+
+# Define common used anchors
+_p: &provider_azurerm
+- azurerm:
+    features:
+      resource_group:
+        prevent_deletion_if_contains_resources: false
+
+# Define template
+kind: StackTemplate
+name: azure-aks
+# Define units itself
+units:
+  -
+    name: aks-cluster
+    type: tfmodule
+    providers: 
+    - azurerm:
+        features:
+          resource_group:
+            prevent_deletion_if_contains_resources: false
+        skip_provider_registration: true
+        alias: vhub
+    - azurerm:
+        features:
+          resource_group:
+            prevent_deletion_if_contains_resources: false
+        skip_provider_registration: true
+    source: aztfmod/caf/azurerm
+    version: "5.7.6"
+    inputs:
+      global_settings:
+        default_region: "region1"
+        regions:
+          region1: {{ .variables.location }}
+      tags:
+        project: "system services"
+      providers:
+        azurerm.vhub: azurerm.vhub
+      resource_groups:
+        aks_re1:
+          name: "aks-re1"
+          region: "region1"
+      compute:
+        aks_clusters:
+          cluster_re1:
+            name: "akscluster-re1-001"
+            resource_group_key: "aks_re1"
+            os_type: "Linux"
+            identity:
+              type: "SystemAssigned"
+            kubernetes_version: "1.26.6"
+            vnet_key: "spoke_aks_re1"
+            network_policy:
+              network_plugin: "azure"
+              load_balancer_sku: "Standard"
+            enable_rbac: true
+            load_balancer_profile:
+              managed_outbound_ip_count: 1
+            default_node_pool:
+              name: "sharedsvc"
+              vm_size: "Standard_D2_v2"
+              subnet_key: "aks_nodepool_system"
+              enabled_auto_scaling: false
+              enable_node_public_ip: false
+              max_pods: 30
+              node_count: 1
+              os_disk_size_gb:  30
+              tags:
+                project: "system services"
+            node_resource_group_name: "aks-nodes-re1"
+      networking:
+        vnets:
+          spoke_aks_re1:
+            resource_group_key: "aks_re1"
+            region: "region1"
+            vnet:
+              name: "aks"
+              address_space:
+              - "100.64.48.0/22"
+            specialsubnets: {}
+            subnets:
+              aks_nodepool_system:
+                name: "aks_nodepool_system"
+                cidr:
+                - "100.64.48.0/24"
+                nsg_key: "azure_kubernetes_cluster_nsg"
+            private_endpoints:
+              name: "private_endpoints"
+              cidr:
+              - "100.64.51.0/27"
+              enforce_private_link_endpoint_network_policies: true
+        network_security_group_definition:
+          # This entry is applied to all subnets with no NSG defined
+          empty_nsg: {}
+          azure_kubernetes_cluster_nsg:
+            nsg:
+            - name: "aks-http-in-allow"
+              priority: "100"
+              direction: "Inbound"
+              access: "Allow"
+              protocol: "tcp"
+              source_port_range: "*"
+              destination_port_range: "80"
+              source_address_prefix: "*"
+              destination_address_prefix: "*"
+            - name: "aks-https-in-allow"
+              priority: "110"
+              direction: "Inbound"
+              access: "Allow"
+              protocol: "tcp"
+              source_port_range: "*"
+              destination_port_range: "443"
+              source_address_prefix: "*"
+              destination_address_prefix: "*"
+            - name: "aks-api-out-allow-1194"
+              priority: "100"
+              direction: "Outbound"
+              access: "Allow"
+              protocol: "udp"
+              source_port_range: "*"
+              destination_port_range: "1194"
+              source_address_prefix: "*"
+              destination_address_prefix: "AzureCloud"
+            - name: "aks-api-out-allow-9000"
+              priority: "110"
+              direction: "Outbound"
+              access: "Allow"
+              protocol: "tcp"
+              source_port_range: "*"
+              destination_port_range: "9000"
+              source_address_prefix: "*"
+              destination_address_prefix: "AzureCloud"
+            - name: "aks-ntp-out-allow"
+              priority: "120"
+              direction: "Outbound"
+              access: "Allow"
+              protocol: "udp"
+              source_port_range: "*"
+              destination_port_range: "123"
+              source_address_prefix: "*"
+              destination_address_prefix: "*"
+            - name: "aks-https-out-allow-443"
+              priority: "130"
+              direction: "Outbound"
+              access: "Allow"
+              protocol: "tcp"
+              source_port_range: "*"
+              destination_port_range: "443"
+              source_address_prefix: "*"
+              destination_address_prefix: "*"
+  -
+    name: outputs
+    type: printer
+    outputs:
+      location: {{ .variables.location }}
+      kubeconfig_cmd: {{ remoteState "this.aks-cluster.aks_clusters.cluster_re1.aks_kubeconfig_cmd" }}
+      resource_group_name: {{ remoteState "this.aks-cluster.aks_clusters.cluster_re1.resource_group_name" }}
+      cluster_name: {{ remoteState "this.aks-cluster.aks_clusters.cluster_re1.cluster_name" }}
+      kube_config: {{ remoteState "this.aks-cluster.aks_clusters.cluster_re1.kube_config" }}
+

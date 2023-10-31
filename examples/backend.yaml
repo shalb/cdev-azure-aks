@@ -1,0 +1,7 @@
+name: azure-backend
+kind: Backend
+provider: azurerm
+spec:
+  resource_group_name: {{ .project.variables.resource_group_name }}
+  storage_account_name: {{ .project.variables.state_storage_account_name }}
+  container_name: {{ .project.variables.state_container_name }}

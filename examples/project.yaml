@@ -1,0 +1,11 @@
+name: demo-project
+kind: Project
+backend: azure-backend
+variables:
+  organization: cluster.dev
+  location: eastus
+  domain: azure.cluster.dev
+  environment: demo
+  resource_group_name: cdevResourceGroup
+  state_storage_account_name: rcdevstates
+  state_container_name: tfstate
