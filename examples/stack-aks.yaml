@@ -3,9 +3,12 @@ template: "../"
 kind: Stack
 backend: azure-backend
 variables:
-  organization: {{ .project.variables.organization }}
-  domain: {{ .project.variables.domain }}
-  environment: {{ .project.variables.environment }}
+  domain_name: {{ .project.variables.domain_name }}
   location: {{ .project.variables.location }}
-  resource_group_name: {{ .project.variables.resource_group_name }}
   tags: {}
+  aks_addons:
+    enable_nginx: true
+    enable_external_dns: true
+    enable_cert_manager: true
+    enable_argocd: true
+    enable_external_secrets: true

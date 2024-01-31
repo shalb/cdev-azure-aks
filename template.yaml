@@ -38,7 +38,7 @@ units:
             prevent_deletion_if_contains_resources: false
         skip_provider_registration: true
     source: aztfmod/caf/azurerm
-    version: "5.7.6"
+    version: "5.7.8"
     inputs:
       global_settings:
         default_region: "region1"
@@ -51,6 +51,9 @@ units:
       resource_groups:
         aks_re1:
           name: "aks-re1"
+          region: "region1"
+        dns_re1:
+          name: "dns-re1"
           region: "region1"
       compute:
         aks_clusters:
@@ -74,12 +77,14 @@ units:
               subnet_key: "aks_nodepool_system"
               enabled_auto_scaling: false
               enable_node_public_ip: false
-              max_pods: 30
+              max_pods: 35
               node_count: 1
               os_disk_size_gb:  30
               tags:
                 project: "system services"
             node_resource_group_name: "aks-nodes-re1"
+            oidc_issuer_enabled: true
+            workload_identity_enabled: true
       networking:
         vnets:
           spoke_aks_re1:
@@ -160,6 +165,34 @@ units:
               destination_port_range: "443"
               source_address_prefix: "*"
               destination_address_prefix: "*"
+        dns_zones:
+          dns_zone1:
+            name: {{ .variables.domain_name }}
+            resource_group_key: "dns_re1"        
+  -
+    name: aks-addons
+    type: tfmodule
+    providers:
+      - azurerm:
+          features:
+            resource_group:
+              prevent_deletion_if_contains_resources: false
+          skip_provider_registration: true
+      - azurerm:
+          features:
+            resource_group:
+              prevent_deletion_if_contains_resources: false
+          skip_provider_registration: true
+          alias: vhub
+    source: "./addons"
+    depends_on: this.aks-cluster
+    inputs:
+      location: {{ .variables.location }}
+      cluster_name: {{ remoteState "this.aks-cluster.aks_clusters.cluster_re1.cluster_name" }}
+      cluster_resource_group_name: {{ remoteState "this.aks-cluster.aks_clusters.cluster_re1.resource_group_name" }}
+      domain_name: {{ .variables.domain_name }}
+      dns_zone_resource_group_name: {{ remoteState "this.aks-cluster.dns_zones.dns_zone1.resource_group_name" }}
+      {{- if .variables.aks_addons }} {{- .variables.aks_addons | toYaml | nindent 6 }} {{ end }}  
   -
     name: outputs
     type: printer
@@ -169,4 +202,6 @@ units:
       resource_group_name: {{ remoteState "this.aks-cluster.aks_clusters.cluster_re1.resource_group_name" }}
       cluster_name: {{ remoteState "this.aks-cluster.aks_clusters.cluster_re1.cluster_name" }}
       kube_config: {{ remoteState "this.aks-cluster.aks_clusters.cluster_re1.kube_config" }}
+      domain: {{ .variables.domain_name }}
+      name_servers: {{ remoteState "this.aks-cluster.dns_zones.dns_zone1.name_servers" }}
 
