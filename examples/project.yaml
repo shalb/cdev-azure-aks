@@ -3,7 +3,7 @@ kind: Project
 backend: azure-backend
 variables:
   location: eastus
-  domain: azure.cluster.dev
+  domain_name: azure.cluster.dev
   resource_group_name: cdevResourceGroup
   state_storage_account_name: cdevstates
   state_container_name: tfstate
