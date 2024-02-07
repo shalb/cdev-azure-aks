@@ -1,1 +1,71 @@
-# cdev-azure-aks
+# Azure-AKS
+
+Cluster.dev uses [stack templates](https://docs.cluster.dev/stack-templates-overview/) to generate users' projects in a desired cloud. AKS-Azure is a stack template that creates and provisions Kubernetes clusters in Azure cloud by means of Azure Kubernetes Service (AKS).
+
+In this repository you will find all information and samples necessary to start an AKS cluster on Azure with Cluster.dev. 
+
+The resources to be created:
+
+* Azure DNS Zone
+* Azure Virtual Network
+* AKS Kubernetes cluster with addons:
+  * cert-manager
+  * ingress-nginx
+  * external-secrets (with Azure Key Vault backend)
+  * external-dns
+  * argocd
+
+## Prerequisites
+
+1. Terraform version >= 1.4
+2. Azure account and a subscription.
+3. Azure CLI installed and configured with your Azure account.
+4. kubectl installed.
+5. [Cluster.dev client installed](https://docs.cluster.dev/get-started-install/).
+6. Parent Domain
+
+## Before you begin
+
+[Create or select an Azure subscription.](https://portal.azure.com/#view/Microsoft_Azure_Billing/SubscriptionsBladeV2)
+
+## Quick Start
+1. Clone example project:
+    ```
+    git clone https://github.com/shalb/cdev-azure-aks.git
+    cd examples/
+    ```
+2. Update project.yaml
+    ```
+    name: demo-project
+    kind: Project
+    backend: azure-backend
+    variables:
+      location: eastus
+      domain: azure.cluster.dev
+      resource_group_name: cdevResourceGroup
+      state_storage_account_name: cdevstates
+      state_container_name: tfstate
+    ```
+3. Create Azure Storage Account and a container for terraform backend
+    ```
+    az group create --name cdevResourceGroup --location EastUS
+    az storage account create --name cdevstates --resource-group cdevResourceGroup --location EastUS --sku Standard_LRS
+    az storage container create --name tfstate --account-name cdevstates
+    ```
+4. It may be necessary to assign the `Storage Blob Data Contributor` role to your user account for the storage account
+5. Edit variables in the example's files, if necessary.
+6. Run `cdev plan`
+7. Run `cdev apply`
+8. Setup DNS delegation for subdomain by creating
+   NS records for subdomain in parent domain
+   Run `cdev output`
+   ```
+   domain = demo.azure.cluster.dev.
+   name_servers = [
+     "ns1-36.azure-dns.com.",
+     "ns2-36.azure-dns.net.",
+     "ns3-36.azure-dns.org.",
+     "ns4-36.azure-dns.info."
+   ]
+   ```
+   add records from name_server list

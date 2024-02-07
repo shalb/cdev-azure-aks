@@ -1,0 +1,14 @@
+name: cluster
+template: "../"
+kind: Stack
+backend: azure-backend
+variables:
+  domain_name: {{ .project.variables.domain_name }}
+  location: {{ .project.variables.location }}
+  tags: {}
+  aks_addons:
+    enable_nginx: true
+    enable_external_dns: true
+    enable_cert_manager: true
+    enable_argocd: true
+    enable_external_secrets: true
