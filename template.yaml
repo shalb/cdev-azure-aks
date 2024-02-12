@@ -184,7 +184,7 @@ units:
               prevent_deletion_if_contains_resources: false
           skip_provider_registration: true
           alias: vhub
-    source: "github.com/shalb/azure-aks-addons?ref=v0.0.1"
+    source: "github.com/shalb/terraform-azurerm-aks-addons?ref=v0.0.1"
     depends_on: this.aks-cluster
     inputs:
       location: {{ .variables.location }}
