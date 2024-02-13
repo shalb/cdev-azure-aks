@@ -24,10 +24,6 @@ The resources to be created:
 5. [Cluster.dev client installed](https://docs.cluster.dev/get-started-install/).
 6. Parent Domain
 
-## Before you begin
-
-[Create or select an Azure subscription.](https://portal.azure.com/#view/Microsoft_Azure_Billing/SubscriptionsBladeV2)
-
 ## Quick Start
 1. Clone example project:
     ```
@@ -52,12 +48,18 @@ The resources to be created:
     az storage account create --name cdevstates --resource-group cdevResourceGroup --location EastUS --sku Standard_LRS
     az storage container create --name tfstate --account-name cdevstates
     ```
-4. It may be necessary to assign the `Storage Blob Data Contributor` role to your user account for the storage account
+4. It may be necessary to assign the `Storage Blob Data Contributor` and `Storage Queue Data Contributor` roles to your user account for the storage account
+    ```
+    STORAGE_ACCOUNT_ID=$(az storage account show --name cdevstates --query id --output tsv)
+    USER_OBJECT_ID=$(az ad signed-in-user show --query id --output tsv)
+    az role assignment create --assignee "$USER_OBJECT_ID" --role "Storage Blob Data Contributor" --scope "$STORAGE_ACCOUNT_ID"
+    az role assignment create --assignee "$USER_OBJECT_ID" --role "Storage Queue Data Contributor" --scope "$STORAGE_ACCOUNT_ID"
+    ```
 5. Edit variables in the example's files, if necessary.
 6. Run `cdev plan`
 7. Run `cdev apply`
 8. Setup DNS delegation for subdomain by creating
-   NS records for subdomain in parent domain
+   NS records for subdomain in parent domain.
    Run `cdev output`
    ```
    domain = demo.azure.cluster.dev.
@@ -69,3 +71,12 @@ The resources to be created:
    ]
    ```
    add records from name_server list
+9. Connect to AKS cluster. Run `cdev output`.
+   ```
+   kubeconfig_cmd = az aks get-credentials --name <aks-cluster-name> --resource-group <aks-cluster-resource-group> --overwrite-existing
+   ```
+   Execute command in `kubeconfig_cmd`
+10. Retrieve ArgoCD admin password
+   ```
+   kubectl -n argocd get secret argocd-initial-admin-secret  -o jsonpath="{.data.password}" | base64 -d; echo
+   ```
