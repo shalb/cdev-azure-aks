@@ -6,6 +6,31 @@ variables:
   domain_name: {{ .project.variables.domain_name }}
   location: {{ .project.variables.location }}
   tags: {}
+  aks_default_node_pool:
+    name: "sharedsvc"
+    vm_size: "Standard_D2_v2"
+    subnet_key: "aks_nodepool_system"
+    enabled_auto_scaling: false
+    enable_node_public_ip: false
+    max_pods: 35
+    node_count: 1
+    os_disk_size_gb:  30
+    tags:
+      project: "system services"
+  aks_node_pools:
+    pool1:
+      name: "nodepool1"
+      vm_size: "Standard_DS2_v2"
+      subnet_key: "aks_nodepool_system"
+      enable_auto_scaling: true
+      enable_node_public_ip: false
+      max_pods: 30
+      node_count: 1
+      min_count: 1
+      max_count: 2
+      os_disk_size_gb: 30
+      tags:
+        project: "project services"
   aks_addons:
     enable_nginx: true
     enable_external_dns: true
