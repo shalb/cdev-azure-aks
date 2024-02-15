@@ -71,17 +71,12 @@ units:
             enable_rbac: true
             load_balancer_profile:
               managed_outbound_ip_count: 1
-            default_node_pool:
-              name: "sharedsvc"
-              vm_size: "Standard_D2_v2"
-              subnet_key: "aks_nodepool_system"
-              enabled_auto_scaling: false
-              enable_node_public_ip: false
-              max_pods: 35
-              node_count: 1
-              os_disk_size_gb:  30
-              tags:
-                project: "system services"
+            {{- if .variables.aks_default_node_pool }}
+            default_node_pool: {{ insertYAML .variables.aks_default_node_pool }}
+            {{- end }}
+            {{- if .variables.aks_node_pools }}
+            node_pools: {{ insertYAML .variables.aks_node_pools }}
+            {{- end }}
             node_resource_group_name: "aks-nodes-re1"
             oidc_issuer_enabled: true
             workload_identity_enabled: true
