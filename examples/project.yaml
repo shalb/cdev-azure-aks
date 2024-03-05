@@ -7,3 +7,4 @@ variables:
   resource_group_name: cdevResourceGroup
   state_storage_account_name: cdevstates
   state_container_name: tfstate
+  kubernetes_version: 1.27.9

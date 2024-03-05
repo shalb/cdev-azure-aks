@@ -41,6 +41,7 @@ The resources to be created:
       resource_group_name: cdevResourceGroup
       state_storage_account_name: cdevstates
       state_container_name: tfstate
+      kubernetes_version: 1.27.9
     ```
 3. Create Azure Storage Account and a container for terraform backend
     ```
@@ -80,3 +81,12 @@ The resources to be created:
    ```
    kubectl -n argocd get secret argocd-initial-admin-secret  -o jsonpath="{.data.password}" | base64 -d; echo
    ```
+
+## Destroy Sample Architecture
+1. Run `cdev destroy`
+2. Remove NS records for subdomain in parent domain
+3. Delete Azure Storage Account and a container for terraform backend
+    ```
+    az group delete --name cdevResourceGroup
+    ```
+    
