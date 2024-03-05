@@ -5,6 +5,7 @@ backend: azure-backend
 variables:
   domain_name: {{ .project.variables.domain_name }}
   location: {{ .project.variables.location }}
+  kubernetes_version: {{ .project.variables.kubernetes_version }}
   tags: {}
   aks_default_node_pool:
     name: "sharedsvc"
